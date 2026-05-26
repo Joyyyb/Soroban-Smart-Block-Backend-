@@ -2,8 +2,8 @@ import WebSocket from 'ws';
 import { prisma } from '../db';
 import { config } from '../config';
 import { fetchEvents, getLatestLedger, getRpcWebsocketUrl, getTransaction } from './rpc';
-import { decodeTransaction, decodeEvent } from './decoder';
-import { enqueueFailure } from './errorQueue';
+import { decodeTransaction } from './decoder';
+import { ingestEvents } from './eventIngestor';
 
 const BATCH = config.indexerBatchSize;
 
@@ -24,6 +24,7 @@ async function processLedgerRange(start: number, end: number) {
   console.log(`Indexing ledgers ${start} → ${end}`);
   const events = await fetchEvents(start, end);
 
+  // Index transactions first so the event ingestor can satisfy the FK constraint
   for (const event of events) {
     await prisma.contract.upsert({
       where: { address: event.contractId },
@@ -71,39 +72,11 @@ async function processLedgerRange(start: number, end: number) {
         },
       });
     }
-
-    let eventDecoded: { eventType: string; decoded: Record<string, unknown> };
-    try {
-      eventDecoded = decodeEvent(event.topics, event.data);
-    } catch (err) {
-      await enqueueFailure({
-        itemType: 'event',
-        itemId: `${event.transactionHash}-${event.topics[0] ?? '0'}`,
-        ledger: event.ledger,
-        error: err,
-        context: { topics: event.topics, data: event.data },
-      });
-      eventDecoded = { eventType: 'unknown', decoded: { raw: { topics: event.topics, data: event.data } } };
-    }
-    const { eventType, decoded: decodedEvent } = eventDecoded;
-    await prisma.event.upsert({
-      where: { id: `${event.transactionHash}-${event.topics[0] ?? '0'}` },
-      update: {},
-      create: {
-        id: `${event.transactionHash}-${event.topics[0] ?? '0'}`,
-        transactionHash: event.transactionHash,
-        contractAddress: event.contractId,
-        eventType,
-        topics: event.topics,
-        data: { raw: event.data },
-        decoded: decodedEvent as object,
-        ledger: event.ledger,
-        ledgerCloseTime: event.ledgerCloseTime,
-      },
-    });
   }
 
-  console.log(`Processed ${events.length} events in ledgers ${start}–${end}`);
+  // Delegate event extraction, decoding, and storage to the dedicated ingestor
+  const stored = await ingestEvents(start, end);
+  console.log(`Processed ${events.length} transactions, stored ${stored} events in ledgers ${start}–${end}`);
 }
 
 function sleep(ms: number) {
