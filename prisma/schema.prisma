@@ -397,5 +397,37 @@ model TaxExportJob {
   @@index([status])
 }
 
+// i18n translation dictionary
+model TranslationKey {
+  id              String   @id @default(cuid())
+  key             String   @unique  // e.g., "transaction.swap_description"
+  defaultText     String   // English template with {placeholders}
+  context         String?  // usage context for translators
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  translations    Translation[]
+
+  @@index([key])
+}
+
+// Translated text for a specific language
+model Translation {
+  id              String   @id @default(cuid())
+  keyId           String
+  language        String   // e.g., "es", "ko", "fr"
+  translatedText  String   // translated template with {placeholders}
+  approvedBy      String?  // translator/reviewer
+  approvedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  key             TranslationKey @relation(fields: [keyId], references: [id])
+
+  @@unique([keyId, language])
+  @@index([language])
+}
+
+
 
 
