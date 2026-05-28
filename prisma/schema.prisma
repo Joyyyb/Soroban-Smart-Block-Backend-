@@ -273,3 +273,47 @@ model SignerSnapshot {
   @@index([ledgerSequence])
   @@index([passed])
 }
+
+// Institutional treasury wallet multi-sig auditor
+model TreasuryWallet {
+  id                String   @id @default(cuid())
+  address           String   @unique
+  name              String
+  requiredThreshold Int      // minimum signature weight required
+  totalSigners       Int      // total number of signers
+  adminEmail        String?  // for alert notifications
+  lastAuditLedger   Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  auditSnapshots    TreasuryAuditSnapshot[]
+
+  @@index([address])
+}
+
+// Periodic audit snapshot of treasury wallet safety metrics
+model TreasuryAuditSnapshot {
+  id                String   @id @default(cuid())
+  treasuryId        String
+  ledgerSequence    Int
+  ledgerCloseTime   DateTime
+  // Balance tracking
+  totalBalance      String   // in stroops
+  balanceThreshold  String   // minimum safe balance
+  balanceHealthy    Boolean  // totalBalance >= balanceThreshold
+  // Multi-sig configuration
+  activeSigners     Int      // current active signers
+  thresholdMet      Boolean  // activeSigners >= requiredThreshold
+  configurationChanged Boolean @default(false)
+  // Alert status
+  alertSent         Boolean  @default(false)
+  alertReason       String?  // "low_balance" | "config_change" | "signer_change"
+  createdAt         DateTime @default(now())
+
+  treasury          TreasuryWallet @relation(fields: [treasuryId], references: [id])
+
+  @@index([treasuryId])
+  @@index([ledgerSequence])
+  @@index([alertSent])
+}
+
