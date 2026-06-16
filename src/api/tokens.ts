@@ -72,9 +72,9 @@ tokenRouter.get('/:address/balance/:account', validateAddressParam('address'), v
     // Build the balance(address) call
     const invokeHostFn = xdr.HostFunction.hostFunctionTypeInvokeContract(
       new xdr.InvokeContractArgs({
-        contractAddress: new Address(address).toScAddress(),
+        contractAddress: new Address(address).toScAddress() as any,
         functionName: 'balance',
-        args: [new Address(account).toScAddress()],
+        args: [new Address(account).toScAddress() as any],
       }),
     );
 

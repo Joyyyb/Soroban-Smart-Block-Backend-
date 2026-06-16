@@ -141,12 +141,12 @@ virtualListRouter.get('/transactions', async (req: Request, res: Response) => {
     status: tx.status,
     ledger: tx.ledgerSequence,
     timestamp: tx.ledgerCloseTime.getTime(),
-    decoded: tx.decodedDescription || undefined,
+    decoded: tx.humanReadable || undefined,
     // compute an exact row height based on content size heuristics so the frontend
     // can reserve the correct space and avoid layout shifts when rendering.
     rowHeight: (() => {
       const titleLen = (tx.hash || '').length;
-      const bodyLen = (tx.decodedDescription || '').length;
+      const bodyLen = (tx.humanReadable || '').length;
       const titleLines = Math.max(1, Math.ceil(titleLen / CHARS_PER_LINE));
       const bodyLines = Math.max(0, Math.ceil(bodyLen / CHARS_PER_LINE));
       const titleHeight = titleLines * TITLE_LINE_HEIGHT;
@@ -159,7 +159,7 @@ virtualListRouter.get('/transactions', async (req: Request, res: Response) => {
     })(),
     displayDims: (() => {
       const titleLen = (tx.hash || '').length;
-      const bodyLen = (tx.decodedDescription || '').length;
+      const bodyLen = (tx.humanReadable || '').length;
       const titleLines = Math.max(1, Math.ceil(titleLen / CHARS_PER_LINE));
       const bodyLines = Math.max(0, Math.ceil(bodyLen / CHARS_PER_LINE));
       const titleHeight = titleLines * TITLE_LINE_HEIGHT;

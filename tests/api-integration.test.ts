@@ -218,7 +218,7 @@ describe('GET /api/v1/transactions', () => {
     (prisma.transaction.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([TX_FIXTURE]);
     (prisma.transaction.findFirst as ReturnType<typeof vi.fn>)?.mockResolvedValue(null);
 
-    const res = await fetch(`${baseUrl}/api/v1/transactions?cursor=cuid-tx-0&limit=1`);
+    const res = await fetch(`${baseUrl}/api/v1/transactions?cursor=2000&limit=1`);
     const body = await res.json();
 
     expect(res.status).toBe(200);

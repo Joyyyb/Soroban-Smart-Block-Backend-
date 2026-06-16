@@ -44,11 +44,11 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "ws": "^8.13.0",
+    "redis": "^6.0.0",
     "zod": "^3.22.4"
   },
   "optionalDependencies": {
-    "rate-limit-redis": "^4.2.0",
-    "redis": "^6.0.0"
+    "rate-limit-redis": "^4.2.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

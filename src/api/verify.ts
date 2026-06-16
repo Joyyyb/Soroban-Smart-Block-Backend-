@@ -161,7 +161,7 @@ async function fetchOnChainHash(contractAddress: string): Promise<string> {
 const wasmUpload = multer({
   dest: os.tmpdir(),
   limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
+  fileFilter: (_req, file, cb: any) => {
     const ok = file.originalname.endsWith('.wasm') || file.mimetype === 'application/wasm';
     cb(ok ? null : new Error('Only .wasm files are accepted'), ok);
   },

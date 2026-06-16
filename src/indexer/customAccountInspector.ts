@@ -17,11 +17,11 @@ export async function inspectCustomAccount(
 
   try {
     const envelope = xdr.TransactionEnvelope.fromXDR(rawXdr, 'base64');
-    const ops = envelope.v1?.tx?.operations() ?? envelope.v0?.tx?.operations() ?? [];
+    const ops = envelope.v1()?.tx()?.operations() ?? envelope.v0()?.tx()?.operations() ?? [];
 
     outer: for (const op of ops) {
       const body = op.body();
-      const invokeOp = body?.invokeHostFunction?.();
+      const invokeOp = (body as any).invokeHostFunction();
       if (!invokeOp) continue;
 
       const authEntries: any[] = invokeOp.auth?.() ?? [];
@@ -109,6 +109,6 @@ export async function inspectCustomAccount(
     }
   } catch (err) {
     // Non-fatal — do not block indexing
-    console.warn(`[custom-account-inspector] parse failed for ${txHash}:`, err?.message ?? err);
+    console.warn(`[custom-account-inspector] parse failed for ${txHash}:`, err instanceof Error ? err.message : String(err));
   }
 }

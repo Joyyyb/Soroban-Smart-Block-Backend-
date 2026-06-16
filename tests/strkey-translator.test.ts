@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Keypair, MuxedAccount, StrKey } from '@stellar/stellar-sdk';
+import { Account, Keypair, MuxedAccount, StrKey } from '@stellar/stellar-sdk';
 import {
   translateAddress,
   resolveRoutingIdentity,
@@ -16,36 +16,10 @@ import {
 const KEYPAIR = Keypair.random();
 const G_ADDRESS = KEYPAIR.publicKey();
 
-// Build a valid M-address from the G-address with mux ID 42
-const MUXED = new MuxedAccount(
-  { accountId: () => G_ADDRESS, sequenceNumber: () => '0', incrementSequenceNumber: () => {} } as any,
-  '42',
-);
-// Use the SDK helper to produce a real M-address strkey
-const M_ADDRESS = MuxedAccount.fromAddress(
-  // Construct via StrKey directly
-  StrKey.encodeMuxedAccount(
-    Buffer.concat([
-      Buffer.from([0x60]), // version byte for muxed
-      // 8-byte big-endian mux ID = 42
-      Buffer.from([0, 0, 0, 0, 0, 0, 0, 42]),
-      // 32-byte raw public key
-      KEYPAIR.rawPublicKey(),
-    ]),
-  ),
-  '0',
-).accountId();
-
-// Build M-address the proper SDK way
 function buildMuxedAddress(gAddress: string, muxId: string): string {
-  const kp = Keypair.fromPublicKey(gAddress);
-  const raw = kp.rawPublicKey(); // 32 bytes
-  const idBig = BigInt(muxId);
-  const idBuf = Buffer.alloc(8);
-  idBuf.writeBigUInt64BE(idBig);
-  // version byte 0x60 = muxed account
-  const payload = Buffer.concat([Buffer.from([0x60]), idBuf, raw]);
-  return StrKey.encodeMuxedAccount(payload);
+  const account = new Account(gAddress, '0');
+  const muxed = new MuxedAccount(account, muxId);
+  return muxed.accountId();
 }
 
 const MUX_ID = '12345678';

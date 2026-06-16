@@ -1087,3 +1087,29 @@ model SettlementBatchSummary {
   @@index([ledgerMin])
   @@index([windowKey])
 }
+
+// CAP-0077: Consensus-frozen ledger key registry
+model FrozenLedgerKey {
+  ledgerKey       String   @id
+  contractAddress String?
+  frozenAtLedger  Int
+  frozenAtTime    DateTime
+  active          Boolean  @default(true)
+  reason          String?
+  createdAt       DateTime @default(now())
+
+  @@index([active])
+}
+
+// CAP-0077: Freeze violation records
+model FreezeViolation {
+  id              String   @id @default(cuid())
+  transactionHash String   @unique
+  contractAddress String?
+  ledgerSequence  Int
+  ledgerCloseTime DateTime
+  frozenKeys      Json
+  createdAt       DateTime @default(now())
+
+  @@index([transactionHash])
+}

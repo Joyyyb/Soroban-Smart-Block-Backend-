@@ -57,7 +57,7 @@ export interface StateExtensionAnalysis {
   historicalContext: {
     previousExtensionLedger?: number;
     extensionFrequency: 'frequent' | 'moderate' | 'rare';
-    averageExtensionSize?: bigint;
+    averageExtensionSize?: string;
   };
 }
 
@@ -243,7 +243,7 @@ async function analyzeHistoricalContext(
 ): Promise<{
   previousExtensionLedger?: number;
   extensionFrequency: 'frequent' | 'moderate' | 'rare';
-  averageExtensionSize?: bigint;
+  averageExtensionSize?: string;
 }> {
   try {
     // Query recent extension transactions for this contract
@@ -281,7 +281,7 @@ async function analyzeHistoricalContext(
       }
     }
 
-    const averageExtensionSize = validCount > 0 ? totalExtension / BigInt(validCount) : undefined;
+    const averageExtensionSize = validCount > 0 ? (totalExtension / BigInt(validCount)).toString() : undefined;
 
     // Determine frequency based on gap between extensions
     const ledgerGap = currentLedger - (previousExtensionLedger ?? currentLedger);
@@ -349,7 +349,7 @@ export async function storeStateExtensionAnalysis(
     await prisma.transaction.update({
       where: { hash: analysis.transactionHash },
       data: {
-        functionArgs: {
+        functionArgs: JSON.parse(JSON.stringify({
           ...analysis.params,
           _analysis: {
             extensionRange: {
@@ -373,7 +373,7 @@ export async function storeStateExtensionAnalysis(
             },
             historicalContext: analysis.historicalContext,
           },
-        },
+        })),
       },
     });
   } catch (error) {

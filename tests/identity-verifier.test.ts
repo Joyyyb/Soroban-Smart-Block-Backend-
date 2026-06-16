@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { decodeMastercardFlags } from '../src/indexer/identity-verifier';
 import { ParsedArg } from '../src/indexer/xdr-parser';
 

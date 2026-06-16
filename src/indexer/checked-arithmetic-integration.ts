@@ -207,7 +207,8 @@ export async function analyzeCheckedArithmeticPatterns(
       }
 
       // Count operation types
-      operationTypes[tx.functionName] = (operationTypes[tx.functionName] ?? 0) + 1;
+      const fnName = tx.functionName ?? 'unknown';
+      operationTypes[fnName] = (operationTypes[fnName] ?? 0) + 1;
 
       // Check for overflow
       if (tx.functionArgs && typeof tx.functionArgs === 'object') {
