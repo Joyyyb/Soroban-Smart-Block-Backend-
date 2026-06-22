@@ -22,6 +22,24 @@ import { warmTokenMetadataCache } from './indexer/token-metadata';
 import { cacheConnect } from './cache';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './logger';
+import { feedOrchestrator } from './feed/orchestrator';
+
+// Stub functions for features requiring missing Prisma schema models
+function attachPrivacyWebSocket(_server: unknown): void {
+  logger.debug('Privacy WebSocket disabled — schema models not yet available');
+}
+function attachComposabilityWebSocket(_server: unknown): void {
+  logger.debug('Composability WebSocket disabled — schema models not yet available');
+}
+function attachArbitrageWebSocket(_server: unknown): void {
+  logger.debug('Arbitrage WebSocket disabled — schema models not yet available');
+}
+function startPoolPriceMonitor(): void {
+  logger.debug('Pool price monitor disabled — schema models not yet available');
+}
+function startArbitrageScanner(): void {
+  logger.debug('Arbitrage scanner disabled — schema models not yet available');
+}
 
 const app = express();
 
@@ -60,7 +78,9 @@ async function main() {
   dbConnectionStatus.set(1);
 
   if (!process.env.DISABLE_INDEXER) {
-    startIndexerService().catch((err) => logger.error('Indexer service failed', { error: String(err) }));
+    startIndexerService().catch((err) =>
+      logger.error('Indexer service failed', { error: String(err) }),
+    );
     warmTokenMetadataCache().catch((err) =>
       logger.warn('Token-metadata cache warm-up failed', { error: String(err) }),
     );
@@ -68,6 +88,25 @@ async function main() {
 
   const httpServer = createServer(app);
   attachWebSocketServer(httpServer);
+  attachPrivacyWebSocket(httpServer);
+  attachComposabilityWebSocket(httpServer);
+  attachArbitrageWebSocket(httpServer);
+
+  if (!process.env.DISABLE_INDEXER) {
+    try {
+      startPoolPriceMonitor();
+    } catch (err) {
+      logger.warn('Pool price monitor failed to start', { error: String(err) });
+    }
+    try {
+      startArbitrageScanner();
+    } catch (err) {
+      logger.warn('Arbitrage scanner failed to start', { error: String(err) });
+    }
+  }
+
+  // Initialize Feed Orchestrator with WebSocket support
+  await feedOrchestrator.initialize(httpServer);
 
   httpServer.listen(config.port, () => {
     logger.info('Soroban Explorer API started', { port: config.port });
